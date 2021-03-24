@@ -1,0 +1,48 @@
+#!/bin/bash
+
+#variables initialization
+server_start_cmd="vd_server"
+server_pid_file="/tmp/.vd_pid.tmp"
+log_path="/tmp/vd_server_logs/vd_server.log"
+functions="$HOME/.vd/vd.fun"
+if [ $UID -eq 0 ]; then
+	functions="/opt/vd.fun";
+fi
+
+shopt -s expand_aliases;
+
+#controlling number of params 
+if [ $# != 1 ]; then
+    echo "vd: usage: vd {start|stop}" 1>&2;
+    exit 1;
+fi
+
+#controlling value of param 1
+case "$1" in 
+	start)
+		if [ -e $server_pid_file ]; then
+			echo "Server already running!" 1>&2;
+			exit 1;
+		fi;
+		echo "Starting server...";
+		$server_start_cmd > $log_path"."$(cat $server_pid_file) &
+		echo "$!" > $server_pid_file;
+		echo "Server up.";;
+	stop)
+		if [ -e $server_pid_file ]; then
+			echo "Shutting server down...";
+			pid=$(cat $server_pid_file)
+			kill -SIGINT $pid
+			rm $server_pid_file;
+		else
+			echo "Server not running yet!" 1>&2;
+			exit 1;
+		fi;
+		bash -l;;
+	*) 
+		echo "vd: usage: vd {start|stop}" 1>&2;
+		exit 1;;
+esac
+
+exit 0;
+
